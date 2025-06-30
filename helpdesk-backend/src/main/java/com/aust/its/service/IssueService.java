@@ -26,6 +26,54 @@ public class IssueService {
     private final UserService userService;
     private final DeveloperService developerService;
 
+    public List<IssueByStatusResponse> getIssueResponsesByUserIdAndStatus(Long userId, IssueStatus status) {
+        List<Issue> issues = issueRepository.findByUserIdAndStatus(userId, status);
+
+        List<IssueByStatusResponse> responses = new ArrayList<>();
+
+        for (Issue issue : issues) {
+            IssueByStatusResponse response = IssueByStatusResponse.builder()
+                    .id(issue.getId())
+                    .title(issue.getTitle())
+                    .description(issue.getDescription())
+                    .user(issue.getUser())
+                    .status(issue.getStatus())
+                    .createdAt(issue.getCreatedAt())
+                    .completedAt(issue.getCompletedAt())
+                    .serialId(issue.getSerialId())
+                    .build();
+
+            if (IssueStatus.PENDING.equals(issue.getStatus()) || IssueStatus.INPROGRESS.equals(issue.getStatus())) {
+                if (issue.getAssignedTo() != null) {
+                    response.setDeveloperName(issue.getAssignedTo().getUser().getUsername());
+                }
+            }
+            if (IssueStatus.COMPLETED.equals(issue.getStatus())) {
+                if (issue.getResolvedBy() != null) {
+                    response.setDeveloperName(issue.getResolvedBy().getUser().getUsername());
+                    response.setCompletedReason(issue.getCompletedReason());
+                    response.setCompletedAt(issue.getCompletedAt());
+                }
+            }
+            if (IssueStatus.REJECTED.equals(issue.getStatus())) {
+                if (issue.getRejectedBy() != null) {
+                    response.setDeveloperName(issue.getRejectedBy().getUser().getUsername());
+                    response.setRejectedReason(issue.getRejectionReason());
+                    response.setRejectedAt(issue.getRejectedAt());
+                } else {
+                    response.setDeveloperName(issue.getRejectedByAdmin());
+                    response.setRejectedReason(issue.getRejectionReason());
+                    response.setRejectedAt(issue.getRejectedAt());
+                }
+            }
+
+            responses.add(response);
+        }
+
+        return responses;
+    }
+
+
     public List<Issue> getIssuesByUserIdAndStatus(Long userId, IssueStatus status) {
         List<Issue> issues = issueRepository.findByUserIdAndStatus(userId, status);
         logger.info("issues by userId and status : {}", issues);

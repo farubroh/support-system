@@ -36,13 +36,22 @@ public class IssueController {
         return repository.save(issue);
     }
 
-    @GetMapping("/user/{id}")
-    public List<Issue> getIssues(@PathVariable("id") Long userId,
-                                 @RequestParam IssueStatus status) {
+//    @GetMapping("/user/{id}")
+//    public List<Issue> getIssues(@PathVariable("id") Long userId,
+//                                 @RequestParam IssueStatus status) {
+//
+//        logger.info("finding issues of userId :: {} for status :: {}", userId, status);
+//        return issueService.getIssuesByUserIdAndStatus(userId, status);
+//    }
 
+    @GetMapping("/user/{id}")
+    public List<IssueByStatusResponse> getIssues(@PathVariable("id") Long userId,
+                                                 @RequestParam IssueStatus status) {
         logger.info("finding issues of userId :: {} for status :: {}", userId, status);
-        return issueService.getIssuesByUserIdAndStatus(userId, status);
+        return issueService.getIssueResponsesByUserIdAndStatus(userId, status);
     }
+
+
 
     @GetMapping("/status/{status}")
     public List<IssueByStatusResponse> getIssuesByStatus(@PathVariable("status") IssueStatus status) {
