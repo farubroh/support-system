@@ -131,27 +131,52 @@ public class IssueService {
         return responses;
     }
 
-    public DeveloperAssignedResponse assignIssue(Long issueId, final IssueAssignPayload issueAssignPayload) {
-        Issue issue = issueRepository.findById(issueId)
-                .orElseThrow(() -> new RuntimeException("Issue not found with ID: " + issueId));
+//    public DeveloperAssignedResponse assignIssue(Long issueId, final IssueAssignPayload issueAssignPayload) {
+//        Issue issue = issueRepository.findById(issueId)
+//                .orElseThrow(() -> new RuntimeException("Issue not found with ID: " + issueId));
+//
+//        Developer developer = developerService.getById(issueAssignPayload.developerId());
+//        issue.setAssignedTo(developer);
+//
+//        List<Issue> assignedIssues = developer.getAssignedIssues();
+//        assignedIssues.add(issue);
+//
+//        developer.setAssignedIssues(assignedIssues);
+//
+//        issueRepository.save(issue);
+//        developerService.save(developer);
+//
+//        return DeveloperAssignedResponse
+//                .builder()
+//                .developerName(developer.getUser().getUsername())
+//                .currentlyTotalTaskInHand(developer.getAssignedIssues().size())
+//                .build();
+//    }
+public DeveloperAssignedResponse assignIssue(Long issueId, final IssueAssignPayload issueAssignPayload) {
+    Issue issue = issueRepository.findById(issueId)
+            .orElseThrow(() -> new RuntimeException("Issue not found with ID: " + issueId));
 
-        Developer developer = developerService.getById(issueAssignPayload.developerId());
-        issue.setAssignedTo(developer);
+    Developer developer = developerService.getById(issueAssignPayload.developerId());
+    issue.setAssignedTo(developer);
 
-        List<Issue> assignedIssues = developer.getAssignedIssues();
-        assignedIssues.add(issue);
+    // Update the issue status to INPROGRESS after assignment
+    issue.setStatus(IssueStatus.INPROGRESS);
 
-        developer.setAssignedIssues(assignedIssues);
+    List<Issue> assignedIssues = developer.getAssignedIssues();
+    assignedIssues.add(issue);
 
-        issueRepository.save(issue);
-        developerService.save(developer);
+    developer.setAssignedIssues(assignedIssues);
 
-        return DeveloperAssignedResponse
-                .builder()
-                .developerName(developer.getUser().getUsername())
-                .currentlyTotalTaskInHand(developer.getAssignedIssues().size())
-                .build();
-    }
+    issueRepository.save(issue);
+    developerService.save(developer);
+
+    return DeveloperAssignedResponse
+            .builder()
+            .developerName(developer.getUser().getUsername())
+            .currentlyTotalTaskInHand(developer.getAssignedIssues().size())
+            .build();
+}
+
 
     public IssueRejectResponse rejectIssue(final Long issueId, final IssueRejectPayload issueRejectPayload) {
         User user = new User();

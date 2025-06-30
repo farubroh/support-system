@@ -1,5 +1,6 @@
 package com.aust.its.controller;
 
+import com.aust.its.dto.DeveloperDto;
 import com.aust.its.dto.IssuesOfDeveloperDto;
 import com.aust.its.entity.Developer;
 import com.aust.its.service.DeveloperService;
@@ -15,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -36,10 +38,22 @@ public class DeveloperController {
             @ApiResponse(responseCode = "500", description = "Server Error",
                     content = @Content(schema = @Schema()))
     })
+//    @GetMapping
+//    public List<Developer> getDevelopers() {
+//        return developerService.getAll();
+//    }
     @GetMapping
-    public List<Developer> getDevelopers() {
-        return developerService.getAll();
+    public List<DeveloperDto> getDevelopers() {
+        List<Developer> developers = developerService.getAll();
+
+        // Map the list of developers to DeveloperDto objects
+        return developers.stream().map(dev -> {
+            // Map Developer to DeveloperDto
+            DeveloperDto developerDto = new DeveloperDto(dev.getId(), dev.getUser().getUsername());
+            return developerDto;
+        }).collect(Collectors.toList());
     }
+
 
     @GetMapping("{id}/issues")
     public IssuesOfDeveloperDto getIssuesOfDeveloper(@PathVariable("id") Long userId) {

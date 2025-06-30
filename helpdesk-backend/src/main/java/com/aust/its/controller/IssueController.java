@@ -1,6 +1,7 @@
 package com.aust.its.controller;
 
 import com.aust.its.dto.*;
+import com.aust.its.entity.Developer;
 import com.aust.its.entity.Issue;
 import com.aust.its.entity.User;
 import com.aust.its.enums.IssueStatus;
@@ -12,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
+import com.aust.its.service.DeveloperService;
+
 
 import java.util.List;
 
@@ -59,12 +62,15 @@ public class IssueController {
         return issueService.getIssuesByStatus(status);
     }
 
+
+
+    // Endpoint to assign issue to a developer
     @PostMapping("{id}/assign")
     public DeveloperAssignedResponse assignIssueToDeveloper(@PathVariable Long id,
                                                             @RequestBody IssueAssignPayload issueAssignPayload) {
-        logger.info("Assigning issue {} to developer", id);
         return issueService.assignIssue(id, issueAssignPayload);
     }
+
 
     @PostMapping("{id}/reject")
     public IssueRejectResponse rejectIssue(@PathVariable Long id,
