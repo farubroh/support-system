@@ -30,8 +30,12 @@ public class DeveloperService {
         return developerRepository.findAll();
     }
 
+//    public Developer getById(long id) {
+//        return developerRepository.findByIdWithAssignedIssues(id).orElse(null);
+//    }
     public Developer getById(long id) {
-        return developerRepository.findByIdWithAssignedIssues(id).orElse(null);
+        return developerRepository.findByIdWithAssignedIssues(id)
+                .orElseThrow(() -> new RuntimeException("Developer not found with ID: " + id));
     }
 
     public Developer save(Developer developer) {
@@ -196,8 +200,14 @@ public class DeveloperService {
                 .build();
     }
 
+//    public Developer getByUserId(Long userId) {
+//        User user = userService.getById(userId);
+//        return developerRepository.findByUser(user);
+//    }
     public Developer getByUserId(Long userId) {
         User user = userService.getById(userId);
-        return developerRepository.findByUser(user);
+        return developerRepository.findByUserWithAssignedIssues(user)
+                .orElseThrow(() -> new RuntimeException("Developer not found for userId: " + userId));
     }
+
 }

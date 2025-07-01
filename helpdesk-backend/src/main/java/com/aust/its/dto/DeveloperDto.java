@@ -1,7 +1,13 @@
 package com.aust.its.dto;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Setter
+@Getter
 public class DeveloperDto {
 
+    // Getters and Setters
     private Long id;  // Developer ID
     private String username;  // Developer's username
 
@@ -11,20 +17,4 @@ public class DeveloperDto {
         this.username = username;
     }
 
-    // Getters and Setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
 }

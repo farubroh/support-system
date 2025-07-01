@@ -15,5 +15,10 @@ public interface DeveloperRepository extends JpaRepository<Developer, Long> {
     @Query("SELECT d FROM Developer d LEFT JOIN FETCH d.assignedIssues WHERE d.id = :id")
     Optional<Developer> findByIdWithAssignedIssues(@Param("id") Long id);
 
+    @Query("SELECT d FROM Developer d LEFT JOIN FETCH d.assignedIssues WHERE d.user = :user")
+    Optional<Developer> findByUserWithAssignedIssues(@Param("user") User user);
+
+
+
     Developer findByUser(User user);
 }

@@ -159,12 +159,12 @@ public DeveloperAssignedResponse assignIssue(Long issueId, final IssueAssignPayl
     Developer developer = developerService.getById(issueAssignPayload.developerId());
     issue.setAssignedTo(developer);
 
-    // Update the issue status to INPROGRESS after assignment
-    issue.setStatus(IssueStatus.INPROGRESS);
+    // ❌ REMOVE THIS LINE:
+    // issue.setStatus(IssueStatus.INPROGRESS);
 
+    // Add to developer's list
     List<Issue> assignedIssues = developer.getAssignedIssues();
     assignedIssues.add(issue);
-
     developer.setAssignedIssues(assignedIssues);
 
     issueRepository.save(issue);
