@@ -160,7 +160,10 @@ public DeveloperAssignedResponse assignIssue(Long issueId, final IssueAssignPayl
     issue.setAssignedTo(developer);
 
     // ❌ REMOVE THIS LINE:
-    // issue.setStatus(IssueStatus.INPROGRESS);
+//     issue.setStatus(IssueStatus.INPROGRESS);
+    issue.setAssignedTo(developer);
+    issue.setStatus(IssueStatus.INPROGRESS); // ✅ Required for User/Admin shift
+
 
     // Add to developer's list
     List<Issue> assignedIssues = developer.getAssignedIssues();
