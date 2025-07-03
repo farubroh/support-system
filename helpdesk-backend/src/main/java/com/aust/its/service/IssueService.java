@@ -212,6 +212,7 @@ public DeveloperAssignedResponse assignIssue(Long issueId, final IssueAssignPayl
                 .build();
     }
 
+
     public Issue updateIssueByStatus(Long issueId, IssueStatusUpdatePayload issueStatusUpdatePayload) {
         Issue issue = issueRepository.findById(issueId)
                 .orElseThrow(() -> new RuntimeException("Issue not found with ID: " + issueId));
@@ -295,6 +296,17 @@ public DeveloperAssignedResponse assignIssue(Long issueId, final IssueAssignPayl
 
         Developer developer = developerService.getById(developerId);
 
+//        Developer previousDeveloper = issue.getAssignedTo();
+//        if (previousDeveloper != null && !previousDeveloper.getId().equals(developerId)) {
+//            previousDeveloper.getAssignedIssues().remove(issue); // Remove issue from old developer
+//        }
+        Developer previousDeveloper = issue.getAssignedTo();
+        if (previousDeveloper != null && previousDeveloper.getId() != developerId) {
+            previousDeveloper.getAssignedIssues().remove(issue); // Remove issue from old developer
+        }
+
+
+
         if(IssueStatus.PENDING.equals(issue.getStatus()) ||
                 IssueStatus.INPROGRESS.equals(issue.getStatus())) {
             issue.setAssignedTo(developer);
@@ -308,4 +320,5 @@ public DeveloperAssignedResponse assignIssue(Long issueId, final IssueAssignPayl
 
         return issueRepository.save(issue);
     }
+
 }
