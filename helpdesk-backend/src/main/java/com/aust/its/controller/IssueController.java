@@ -61,6 +61,11 @@ public class IssueController {
         logger.info("finding issues of status :: {}", status);
         return issueService.getIssuesByStatus(status);
     }
+    @GetMapping("/all")
+    public List<Issue> getAllIssues() {
+        return repository.findAll();
+    }
+
 
 
 
