@@ -320,5 +320,25 @@ public DeveloperAssignedResponse assignIssue(Long issueId, final IssueAssignPayl
 
         return issueRepository.save(issue);
     }
+    public Issue createIssueWithFiles(String title, String description, String contact, String status,
+                                      Long userId, String availability, String category, List<String> filePaths) {
+
+        User user = UserRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Issue issue = new Issue();
+        issue.setTitle(title);
+        issue.setDescription(description);
+        issue.setContact(contact);
+        issue.setStatus(IssueStatus.valueOf(status));
+        issue.setUser(user);
+        issue.setAvailability(availability);
+        issue.setCategory(category);
+        issue.setCreatedAt(LocalDateTime.now());
+        issue.setFilePaths(filePaths); // 🆕 new field for file URLs
+
+        return issueRepository.save(issue);
+    }
+
 
 }

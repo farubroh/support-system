@@ -9,14 +9,38 @@ import com.aust.its.mapper.IssueMapper;
 import com.aust.its.repository.IssueRepository;
 import com.aust.its.service.IssueService;
 import com.aust.its.service.UserService;
+//import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.aust.its.service.DeveloperService;
 
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.core.io.UrlResource;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 
 @CrossOrigin(origins = "http://localhost:4200")
 @RestController
@@ -94,4 +118,61 @@ public class IssueController {
                                 @RequestBody AssignDeveloperPayload assignDeveloperPayload) {
         return issueService.updateAssignee(issueId, assignDeveloperPayload.developerId());
     }
+    @PostMapping("/issues/with-files")
+    public ResponseEntity<?> createIssueWithFiles(
+            @RequestParam("title") String title,
+            @RequestParam("description") String description,
+            @RequestParam("contact") String contact,
+            @RequestParam("status") String status,
+            @RequestParam("userId") Long userId,
+            @RequestParam("availability") String availability,
+            @RequestParam("category") String category,
+            @RequestParam(value = "files", required = false) List<MultipartFile> files
+    ) {
+        try {
+            List<String> filePaths = new ArrayList<>();
+
+            if (files != null && !files.isEmpty()) {
+                for (MultipartFile file : files) {
+                    String uploadDir = "uploads/" + userId;
+                    String originalFilename = file.getOriginalFilename();
+                    String filePath = uploadDir + "/" + originalFilename;
+
+                    File dir = new File(uploadDir);
+                    if (!dir.exists()) dir.mkdirs();
+
+                    File dest = new File(filePath);
+                    file.transferTo(dest);
+
+                    filePaths.add(filePath);
+                }
+            }
+
+            Issue newIssue = issueService.createIssueWithFiles(
+                    title, description, contact, status, userId, availability, category, filePaths
+            );
+
+            return ResponseEntity.ok(newIssue);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error saving issue: " + e.getMessage());
+        }
+    }
+    @GetMapping("/issues/files/{userId}/{filename:.+}")
+    public ResponseEntity<Resource> getFile(@PathVariable String userId, @PathVariable String filename) {
+        try {
+            Path path = Paths.get("uploads/" + userId).resolve(filename);
+            Resource resource = new UrlResource(path.toUri());
+
+            if (!resource.exists()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .body(resource);
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
 }

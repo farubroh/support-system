@@ -15,6 +15,8 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+
+
 public class Issue {
 
     @Id
@@ -52,4 +54,9 @@ public class Issue {
     private String rejectedByAdmin;
     private String rejectionReason;
     private String completedReason;
+    // ✅ New field to store uploaded file paths
+    @ElementCollection
+    @CollectionTable(name = "issue_files", joinColumns = @JoinColumn(name = "issue_id"))
+    @Column(name = "file_path")
+    private List<String> filePaths;
 }
