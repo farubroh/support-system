@@ -7,6 +7,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "issues")
@@ -15,8 +16,6 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-
-
 public class Issue {
 
     @Id
@@ -25,13 +24,15 @@ public class Issue {
 
     private String title;
     private String description;
+
     @ManyToOne(fetch = FetchType.EAGER)
     private User user;
+
     private IssueStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime completedAt;
     private LocalDateTime rejectedAt;
-    private String serialId; // it will assigned by admin when the issue is assigned to developer
+    private String serialId;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "assigned_to_id")
@@ -54,9 +55,12 @@ public class Issue {
     private String rejectedByAdmin;
     private String rejectionReason;
     private String completedReason;
-    // ✅ New field to store uploaded file paths
-    @ElementCollection
-    @CollectionTable(name = "issue_files", joinColumns = @JoinColumn(name = "issue_id"))
-    @Column(name = "file_path")
-    private List<String> filePaths;
+
+    // ✅ Only this field added
+    @Column(length = 255)
+    private String category;
+
+    @OneToMany(mappedBy = "issue", cascade = CascadeType.ALL)
+    private List<IssueFile> files;
+
 }

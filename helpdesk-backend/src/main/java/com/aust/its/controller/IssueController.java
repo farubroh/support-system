@@ -3,6 +3,7 @@ package com.aust.its.controller;
 import com.aust.its.dto.*;
 import com.aust.its.entity.Developer;
 import com.aust.its.entity.Issue;
+import com.aust.its.entity.IssueFile;
 import com.aust.its.entity.User;
 import com.aust.its.enums.IssueStatus;
 import com.aust.its.mapper.IssueMapper;
@@ -25,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.web.multipart.MultipartFile;
@@ -62,6 +64,11 @@ public class IssueController {
         Issue issue = IssueMapper.payloadToEntity(issuePayload, user);
         return repository.save(issue);
     }
+    @GetMapping("/all_admin")
+    public List<IssueByStatusResponse> getAllIssuesForAdmin() {
+        return issueService.getAllIssuesForKPI();
+    }
+
 
 //    @GetMapping("/user/{id}")
 //    public List<Issue> getIssues(@PathVariable("id") Long userId,
@@ -118,49 +125,53 @@ public class IssueController {
                                 @RequestBody AssignDeveloperPayload assignDeveloperPayload) {
         return issueService.updateAssignee(issueId, assignDeveloperPayload.developerId());
     }
-    @PostMapping("/issues/with-files")
+
+    @PostMapping("/with-files")
     public ResponseEntity<?> createIssueWithFiles(
             @RequestParam("title") String title,
             @RequestParam("description") String description,
-            @RequestParam("contact") String contact,
-            @RequestParam("status") String status,
             @RequestParam("userId") Long userId,
-            @RequestParam("availability") String availability,
             @RequestParam("category") String category,
             @RequestParam(value = "files", required = false) List<MultipartFile> files
     ) {
         try {
-            List<String> filePaths = new ArrayList<>();
+            List<String> savedFileNames = new ArrayList<>();
 
             if (files != null && !files.isEmpty()) {
                 for (MultipartFile file : files) {
-                    String uploadDir = "uploads/" + userId;
                     String originalFilename = file.getOriginalFilename();
-                    String filePath = uploadDir + "/" + originalFilename;
+                    if (originalFilename == null || originalFilename.isBlank()) continue;
 
+                    // ✅ Fixed File Save Location
+                    String uploadDir = "D:/iums_images/" + userId;
                     File dir = new File(uploadDir);
                     if (!dir.exists()) dir.mkdirs();
 
-                    File dest = new File(filePath);
+                    File dest = new File(uploadDir + "/" + originalFilename);
                     file.transferTo(dest);
 
-                    filePaths.add(filePath);
+                    savedFileNames.add(originalFilename); // ✅ Save only filename
                 }
             }
 
             Issue newIssue = issueService.createIssueWithFiles(
-                    title, description, contact, status, userId, availability, category, filePaths
+                    title, description, userId, category, savedFileNames
             );
 
             return ResponseEntity.ok(newIssue);
+
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error saving issue: " + e.getMessage());
+            e.printStackTrace(); // helpful for debugging
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error saving issue: " + e.getMessage());
         }
     }
-    @GetMapping("/issues/files/{userId}/{filename:.+}")
+
+
+    @GetMapping("/files/{userId}/{filename:.+}")
     public ResponseEntity<Resource> getFile(@PathVariable String userId, @PathVariable String filename) {
         try {
-            Path path = Paths.get("uploads/" + userId).resolve(filename);
+            Path path = Paths.get("D:/iums_images/" + userId).resolve(filename); // ✅ FIXED
             Resource resource = new UrlResource(path.toUri());
 
             if (!resource.exists()) {
@@ -174,5 +185,6 @@ public class IssueController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+
 
 }

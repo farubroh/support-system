@@ -3,18 +3,23 @@ package com.aust.its.service;
 import com.aust.its.dto.*;
 import com.aust.its.entity.Developer;
 import com.aust.its.entity.Issue;
+import com.aust.its.entity.IssueFile;
 import com.aust.its.entity.User;
 import com.aust.its.enums.IssueStatus;
 import com.aust.its.enums.Role;
+import com.aust.its.repository.IssueFileRepository;
 import com.aust.its.repository.IssueRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,10 +30,12 @@ public class IssueService {
     private final IssueRepository issueRepository;
     private final UserService userService;
     private final DeveloperService developerService;
+    private final IssueFileRepository issueFileRepository;
+    private static final String FILE_SAVE_DIRECTORY = "D:/iums_images";
+
 
     public List<IssueByStatusResponse> getIssueResponsesByUserIdAndStatus(Long userId, IssueStatus status) {
         List<Issue> issues = issueRepository.findByUserIdAndStatus(userId, status);
-
         List<IssueByStatusResponse> responses = new ArrayList<>();
 
         for (Issue issue : issues) {
@@ -41,30 +48,35 @@ public class IssueService {
                     .createdAt(issue.getCreatedAt())
                     .completedAt(issue.getCompletedAt())
                     .serialId(issue.getSerialId())
+                    .category(issue.getCategory()) // ✅ add category
                     .build();
 
+            // ✅ Add attached file names
+            List<String> filenames = issueFileRepository.findByIssueId(issue.getId())
+                    .stream()
+                    .map(IssueFile::getFileName)
+                    .collect(Collectors.toList());
+            response.setFiles(filenames);
+
+            // Developer & status handling
             if (IssueStatus.PENDING.equals(issue.getStatus()) || IssueStatus.INPROGRESS.equals(issue.getStatus())) {
                 if (issue.getAssignedTo() != null) {
                     response.setDeveloperName(issue.getAssignedTo().getUser().getUsername());
                 }
-            }
-            if (IssueStatus.COMPLETED.equals(issue.getStatus())) {
+            } else if (IssueStatus.COMPLETED.equals(issue.getStatus())) {
                 if (issue.getResolvedBy() != null) {
                     response.setDeveloperName(issue.getResolvedBy().getUser().getUsername());
                     response.setCompletedReason(issue.getCompletedReason());
                     response.setCompletedAt(issue.getCompletedAt());
                 }
-            }
-            if (IssueStatus.REJECTED.equals(issue.getStatus())) {
+            } else if (IssueStatus.REJECTED.equals(issue.getStatus())) {
                 if (issue.getRejectedBy() != null) {
                     response.setDeveloperName(issue.getRejectedBy().getUser().getUsername());
-                    response.setRejectedReason(issue.getRejectionReason());
-                    response.setRejectedAt(issue.getRejectedAt());
                 } else {
                     response.setDeveloperName(issue.getRejectedByAdmin());
-                    response.setRejectedReason(issue.getRejectionReason());
-                    response.setRejectedAt(issue.getRejectedAt());
                 }
+                response.setRejectedReason(issue.getRejectionReason());
+                response.setRejectedAt(issue.getRejectedAt());
             }
 
             responses.add(response);
@@ -72,6 +84,7 @@ public class IssueService {
 
         return responses;
     }
+
 
 
     public List<Issue> getIssuesByUserIdAndStatus(Long userId, IssueStatus status) {
@@ -82,46 +95,47 @@ public class IssueService {
 
     public List<IssueByStatusResponse> getIssuesByStatus(IssueStatus status) {
         List<Issue> issues = issueRepository.findByStatus(status);
-
         List<IssueByStatusResponse> responses = new ArrayList<>();
 
         for (Issue issue : issues) {
-            IssueByStatusResponse response =
-                    IssueByStatusResponse
-                            .builder()
-                            .id(issue.getId())
-                            .title(issue.getTitle())
-                            .description(issue.getDescription())
-                            .user(issue.getUser())
-                            .status(issue.getStatus())
-                            .createdAt(issue.getCreatedAt())
-                            .completedAt(issue.getCompletedAt())
-                            .serialId(issue.getSerialId())
-                            .build();
+            IssueByStatusResponse response = IssueByStatusResponse.builder()
+                    .id(issue.getId())
+                    .title(issue.getTitle())
+                    .description(issue.getDescription())
+                    .user(issue.getUser())
+                    .status(issue.getStatus())
+                    .createdAt(issue.getCreatedAt())
+                    .completedAt(issue.getCompletedAt())
+                    .serialId(issue.getSerialId())
+                    .category(issue.getCategory()) // ✅ add category
+                    .build();
 
-            if(IssueStatus.PENDING.equals(issue.getStatus()) || IssueStatus.INPROGRESS.equals(issue.getStatus())) {
-                if(issue.getAssignedTo() != null) {
+            // ✅ Add attached file names
+            List<String> filenames = issueFileRepository.findByIssueId(issue.getId())
+                    .stream()
+                    .map(IssueFile::getFileName)
+                    .collect(Collectors.toList());
+            response.setFiles(filenames);
+
+            // Developer & status handling
+            if (IssueStatus.PENDING.equals(issue.getStatus()) || IssueStatus.INPROGRESS.equals(issue.getStatus())) {
+                if (issue.getAssignedTo() != null) {
                     response.setDeveloperName(issue.getAssignedTo().getUser().getUsername());
                 }
-            }
-            if(IssueStatus.COMPLETED.equals(issue.getStatus())) {
-                if(issue.getResolvedBy() != null) {
+            } else if (IssueStatus.COMPLETED.equals(issue.getStatus())) {
+                if (issue.getResolvedBy() != null) {
                     response.setDeveloperName(issue.getResolvedBy().getUser().getUsername());
                     response.setCompletedReason(issue.getCompletedReason());
                     response.setCompletedAt(issue.getCompletedAt());
                 }
-            }
-            if(IssueStatus.REJECTED.equals(issue.getStatus())) {
-                if(issue.getRejectedBy() != null) {
+            } else if (IssueStatus.REJECTED.equals(issue.getStatus())) {
+                if (issue.getRejectedBy() != null) {
                     response.setDeveloperName(issue.getRejectedBy().getUser().getUsername());
-                    response.setRejectedReason(issue.getRejectionReason());
-                    response.setRejectedAt(issue.getRejectedAt());
-                }
-                else {
+                } else {
                     response.setDeveloperName(issue.getRejectedByAdmin());
-                    response.setRejectedReason(issue.getRejectionReason());
-                    response.setRejectedAt(issue.getRejectedAt());
                 }
+                response.setRejectedReason(issue.getRejectionReason());
+                response.setRejectedAt(issue.getRejectedAt());
             }
 
             responses.add(response);
@@ -131,7 +145,8 @@ public class IssueService {
         return responses;
     }
 
-//    public DeveloperAssignedResponse assignIssue(Long issueId, final IssueAssignPayload issueAssignPayload) {
+
+    //    public DeveloperAssignedResponse assignIssue(Long issueId, final IssueAssignPayload issueAssignPayload) {
 //        Issue issue = issueRepository.findById(issueId)
 //                .orElseThrow(() -> new RuntimeException("Issue not found with ID: " + issueId));
 //
@@ -320,25 +335,101 @@ public DeveloperAssignedResponse assignIssue(Long issueId, final IssueAssignPayl
 
         return issueRepository.save(issue);
     }
-    public Issue createIssueWithFiles(String title, String description, String contact, String status,
-                                      Long userId, String availability, String category, List<String> filePaths) {
+    @Transactional
+    public Issue createIssueWithFiles(String title, String description, Long userId, String category, List<String> uploadedFilenames) {
+        // Get user
+        User user = userService.getById(userId);
 
-        User user = UserRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
+        // Create issue and save
         Issue issue = new Issue();
         issue.setTitle(title);
         issue.setDescription(description);
-        issue.setContact(contact);
-        issue.setStatus(IssueStatus.valueOf(status));
         issue.setUser(user);
-        issue.setAvailability(availability);
+        issue.setStatus(IssueStatus.PENDING);
+
         issue.setCategory(category);
         issue.setCreatedAt(LocalDateTime.now());
-        issue.setFilePaths(filePaths); // 🆕 new field for file URLs
 
-        return issueRepository.save(issue);
+        Issue savedIssue = issueRepository.save(issue); // Save to get issue ID
+
+        // Map each filename to an IssueFile entity
+        List<IssueFile> issueFiles = uploadedFilenames.stream()
+                .map(fileName -> IssueFile.builder()
+                        .fileName(fileName)
+                        .issue(savedIssue)
+                        .user(user)
+                        .build())
+                .collect(Collectors.toList());
+
+        // Save file metadata to DB
+        issueFileRepository.saveAll(issueFiles);
+
+        return savedIssue;
     }
+
+    // Utility method (optional): Save actual file to D:/iums_images
+    public String saveFileToDisk(String userId, String originalFilename, byte[] fileBytes) throws Exception {
+        String dirPath = FILE_SAVE_DIRECTORY + "/" + userId;
+        File dir = new File(dirPath);
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+
+        File savedFile = new File(dir, originalFilename);
+        java.nio.file.Files.write(savedFile.toPath(), fileBytes);
+        return originalFilename; // Return saved file name
+    }
+    public List<IssueByStatusResponse> getAllIssuesForKPI() {
+        List<Issue> issues = issueRepository.findAll();
+        List<IssueByStatusResponse> responses = new ArrayList<>();
+
+        for (Issue issue : issues) {
+            IssueByStatusResponse response = IssueByStatusResponse.builder()
+                    .id(issue.getId())
+                    .title(issue.getTitle())
+                    .description(issue.getDescription())
+                    .user(issue.getUser())
+                    .status(issue.getStatus())
+                    .createdAt(issue.getCreatedAt())
+                    .completedAt(issue.getCompletedAt())
+                    .serialId(issue.getSerialId())
+                    .category(issue.getCategory()) // ✅ add category
+                    .build();
+
+            // ✅ Add attached file names
+            List<String> filenames = issueFileRepository.findByIssueId(issue.getId())
+                    .stream()
+                    .map(IssueFile::getFileName)
+                    .collect(Collectors.toList());
+            response.setFiles(filenames);
+
+            if (IssueStatus.PENDING.equals(issue.getStatus()) || IssueStatus.INPROGRESS.equals(issue.getStatus())) {
+                if (issue.getAssignedTo() != null) {
+                    response.setDeveloperName(issue.getAssignedTo().getUser().getUsername());
+                }
+            } else if (IssueStatus.COMPLETED.equals(issue.getStatus())) {
+                if (issue.getResolvedBy() != null) {
+                    response.setDeveloperName(issue.getResolvedBy().getUser().getUsername());
+                    response.setCompletedReason(issue.getCompletedReason());
+                    response.setCompletedAt(issue.getCompletedAt());
+                }
+            } else if (IssueStatus.REJECTED.equals(issue.getStatus())) {
+                if (issue.getRejectedBy() != null) {
+                    response.setDeveloperName(issue.getRejectedBy().getUser().getUsername());
+                } else {
+                    response.setDeveloperName(issue.getRejectedByAdmin());
+                }
+                response.setRejectedReason(issue.getRejectionReason());
+                response.setRejectedAt(issue.getRejectedAt());
+            }
+
+            responses.add(response);
+        }
+
+        return responses;
+    }
+
+
 
 
 }

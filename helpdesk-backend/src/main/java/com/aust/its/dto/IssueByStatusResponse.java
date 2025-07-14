@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -24,4 +25,6 @@ public class IssueByStatusResponse {
     String developerName;
     String completedReason;
     String rejectedReason;
+    private String category;
+    private List<String> files;
 }
