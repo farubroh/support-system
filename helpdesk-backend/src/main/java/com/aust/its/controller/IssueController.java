@@ -24,8 +24,7 @@ import com.aust.its.service.DeveloperService;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -171,16 +170,23 @@ public class IssueController {
     @GetMapping("/files/{userId}/{filename:.+}")
     public ResponseEntity<Resource> getFile(@PathVariable String userId, @PathVariable String filename) {
         try {
-            Path path = Paths.get("D:/iums_images/" + userId).resolve(filename); // ✅ FIXED
+            Path path = Paths.get("D:/iums_images/" + userId).resolve(filename);
             Resource resource = new UrlResource(path.toUri());
 
             if (!resource.exists()) {
                 return ResponseEntity.notFound().build();
             }
 
+            // 🔍 Detect the MIME type
+            String mimeType = Files.probeContentType(path);
+            if (mimeType == null) {
+                mimeType = "application/octet-stream"; // Fallback
+            }
+
             return ResponseEntity.ok()
-                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .contentType(MediaType.parseMediaType(mimeType))
                     .body(resource);
+
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
