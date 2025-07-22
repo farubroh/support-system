@@ -25,8 +25,10 @@ import com.aust.its.service.DeveloperService;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.core.io.UrlResource;
@@ -41,6 +43,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 
 
 @CrossOrigin(origins = "http://localhost:4200")
@@ -191,6 +194,46 @@ public class IssueController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+    @GetMapping("/users/total")
+    public ResponseEntity<Map<String, Long>> getTotalUsers() {
+        long totalUsers = userService.getTotalUsersCount(); // Service method to get the total users count
+        Map<String, Long> response = new HashMap<>();
+        response.put("count", totalUsers);
+        return ResponseEntity.ok(response);
+    }
+    @GetMapping("/issues/total")
+    public ResponseEntity<Map<String, Long>> getTotalIssues() {
+        long totalIssues = issueService.getTotalIssuesCount(); // Service method to get the total issues count
+        Map<String, Long> response = new HashMap<>();
+        response.put("count", totalIssues);
+        return ResponseEntity.ok(response);
+    }
+    @GetMapping("/issues/today/user-rank/{userId}")
+    public ResponseEntity<Map<String, Object>> getTodayIssueStats(@PathVariable Long userId) {
+        LocalDate today = LocalDate.now();
+        LocalDateTime start = today.atStartOfDay();
+        LocalDateTime end = today.atTime(23, 59, 59);  // Include the entire day
+
+        List<Issue> todayIssues = repository.findByCreatedAtBetweenOrderByCreatedAtAsc(start, end);
+
+        int userPosition = -1;
+        for (int i = 0; i < todayIssues.size(); i++) {
+            if (todayIssues.get(i).getUser().getId() == userId) {
+                userPosition = i + 1;
+                break;
+            }
+        }
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("totalTodayIssues", todayIssues.size());
+        result.put("userRank", userPosition);
+
+        return ResponseEntity.ok(result);
+    }
+
+
+
+
 
 
 }

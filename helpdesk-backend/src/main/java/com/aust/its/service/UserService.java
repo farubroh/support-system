@@ -14,4 +14,8 @@ public class UserService {
     public User getById(long userId) {
         return userRepository.findById(userId).orElse(null);
     }
+    public long getTotalUsersCount() {
+        return userRepository.count(); // Get total users count from the database
+    }
+
 }

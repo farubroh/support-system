@@ -428,6 +428,11 @@ public class IssueService {
 
         return responses;
     }
+    public long getTotalIssuesCount() {
+        return issueRepository.count(); // Get total issues count from the database
+    }
+
+
 
 
 
